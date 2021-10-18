@@ -59,12 +59,12 @@ void tcp_in_handler(SOCKET accepted_sock, std::shared_ptr<std::queue<char>> queu
 		if (recv_num == -1) {
 			// error
 			*sigflag_p = signal_flag::ERR;
-			sprintf(buf, "Êı¾İ´«Èë´íÎó£¬´«ÈëÁ¬½Ó±»Òì³£µØ¹Ø±Õ (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
+			sprintf(buf, "æ•°æ®ä¼ å…¥é”™è¯¯ï¼Œä¼ å…¥è¿æ¥è¢«å¼‚å¸¸åœ°å…³é—­ (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
 			err(buf);
 		} else if (recv_num == 0) {
 			// connection shutdown 
 			*sigflag_p = signal_flag::SHUTDOWN;
-			sprintf(buf, "Á¬½Ó±»Ò»¸ö´«Èë¶Ë¶Ï¿ª (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
+			sprintf(buf, "è¿æ¥è¢«ä¸€ä¸ªä¼ å…¥ç«¯æ–­å¼€ (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
 			log(buf);
 		} else {
 			mtx_p->lock();
@@ -105,7 +105,7 @@ void tcp_out_handler(SOCKET forward_sock,
 			int send_num = send(forward_sock, buff_p.get(), tosend_num, 0);
 			if (send_num == -1) {
 				*sigflag_p = signal_flag::ERR;
-				sprintf(buf, "Êı¾İ´«³ö´íÎó£¬´«³öÁ¬½Ó±»Òì³£µØ¹Ø±Õ (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
+				sprintf(buf, "æ•°æ®ä¼ å‡ºé”™è¯¯ï¼Œä¼ å‡ºè¿æ¥è¢«å¼‚å¸¸åœ°å…³é—­ (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
 				err(buf);
 			}
 		} else {
@@ -118,7 +118,7 @@ int tcp_loop(std::shared_ptr<forward_info> fi) {
 	char buf[BUFSIZ];
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (listen_sock == INVALID_SOCKET) {
-		err("½¨Á¢¼àÌıÌ×½Ó×Ö´íÎó");
+		err("å»ºç«‹ç›‘å¬å¥—æ¥å­—é”™è¯¯");
 		return 1;
 	}
 	sockaddr_in sa;
@@ -126,12 +126,12 @@ int tcp_loop(std::shared_ptr<forward_info> fi) {
 	sa.sin_addr.S_un.S_addr = fi->_listen_addr;
 	sa.sin_port = fi->_listen_port;
 	if (bind(listen_sock, reinterpret_cast<sockaddr*>(&sa), sizeof(sockaddr_in))) {
-		err("°ó¶¨µ½¶Ë¿Ú´íÎó");
+		err("ç»‘å®šåˆ°ç«¯å£é”™è¯¯");
 		return 1;
 	}
 
 	if (listen(listen_sock, 0)) {
-		err("¼àÌıÌ×½Ó×Ö´íÎó");
+		err("ç›‘å¬å¥—æ¥å­—é”™è¯¯");
 		return 1;
 	}
 
@@ -141,15 +141,15 @@ int tcp_loop(std::shared_ptr<forward_info> fi) {
 		SOCKET accepted_sock =
 			accept(listen_sock, reinterpret_cast<sockaddr*>(&accepted_sa), &accepted_sa_len);
 		if (accepted_sock == INVALID_SOCKET) {
-			err("½ÓÊÜÁ¬½Ó´íÎó");
+			err("æ¥å—è¿æ¥é”™è¯¯");
 		} else {
 
-			sprintf(buf, "½ÓÊÜ´«ÈëÁ¬½Ó (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
+			sprintf(buf, "æ¥å—ä¼ å…¥è¿æ¥ (%s:%d)", inet_ntoa(accepted_sa.sin_addr), ntohs(accepted_sa.sin_port));
 			log(buf);
 
 			SOCKET forward_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			if (forward_sock == INVALID_SOCKET) {
-				err("½¨Á¢×ª·¢Ì×½Ó×Ö´íÎó");
+				err("å»ºç«‹è½¬å‘å¥—æ¥å­—é”™è¯¯");
 				return 1;
 			}
 
@@ -158,12 +158,12 @@ int tcp_loop(std::shared_ptr<forward_info> fi) {
 			forward_sa.sin_addr.S_un.S_addr = fi->_forward_addr;
 			forward_sa.sin_port = fi->_forward_port;
 			if (connect(forward_sock, reinterpret_cast<sockaddr*>(&forward_sa), sizeof(sockaddr_in))) {
-				err("Á¬½Óµ½×ª·¢Ä¿±ê´íÎó");
+				err("è¿æ¥åˆ°è½¬å‘ç›®æ ‡é”™è¯¯");
 				shutdown(accepted_sock, 2);
 				continue;
 			}
 
-			sprintf(buf, "½¨Á¢´«³öÁ¬½Ó (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
+			sprintf(buf, "å»ºç«‹ä¼ å‡ºè¿æ¥ (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
 			log(buf);
 
 			std::shared_ptr<std::queue<char>> queue_p(new std::queue<char>);
@@ -190,10 +190,10 @@ void udp_in_handler(SOCKET recv_sock,
 		int recv_num = recvfrom(recv_sock, buff_p.get(), HEAP_BUFSIZ, 0, 
 			reinterpret_cast<sockaddr*>(&recv_sa), &recv_sa_len);
 		if (recv_num == -1) {
-			sprintf(buf, "Êı¾İ´«Èë´íÎó (%s:%d)", inet_ntoa(recv_sa.sin_addr), ntohs(recv_sa.sin_port));
+			sprintf(buf, "æ•°æ®ä¼ å…¥é”™è¯¯ (%s:%d)", inet_ntoa(recv_sa.sin_addr), ntohs(recv_sa.sin_port));
 			err(buf);
 		} else if (recv_num == 0) {
-			sprintf(buf, "Êı¾İ±¨Ì×½Ó×Ö¶Ï¿ª (%s:%d)", inet_ntoa(recv_sa.sin_addr), ntohs(recv_sa.sin_port));
+			sprintf(buf, "æ•°æ®æŠ¥å¥—æ¥å­—æ–­å¼€ (%s:%d)", inet_ntoa(recv_sa.sin_addr), ntohs(recv_sa.sin_port));
 			log(buf);
 		} else {
 			mtx_p->lock();
@@ -228,7 +228,7 @@ void udp_out_handler(SOCKET forward_sock,
 			int send_num = sendto(forward_sock, buff_p.get(), tosend_num, 0, 
 				reinterpret_cast<sockaddr*>(&forward_sa), sizeof(sockaddr_in));
 			if (send_num == -1) {
-				sprintf(buf, "Êı¾İ´«³ö´íÎó (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
+				sprintf(buf, "æ•°æ®ä¼ å‡ºé”™è¯¯ (%s:%d)", inet_ntoa(forward_sa.sin_addr), ntohs(forward_sa.sin_port));
 				err(buf);
 			}
 		} else {
@@ -240,7 +240,7 @@ void udp_out_handler(SOCKET forward_sock,
 int udp_loop(std::shared_ptr<forward_info> fi) {
 	SOCKET recv_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (recv_sock == INVALID_SOCKET) {
-		err("½¨Á¢¼àÌıÌ×½Ó×Ö´íÎó");
+		err("å»ºç«‹ç›‘å¬å¥—æ¥å­—é”™è¯¯");
 		return 1;
 	}
 	sockaddr_in recv_sa;
@@ -248,7 +248,7 @@ int udp_loop(std::shared_ptr<forward_info> fi) {
 	recv_sa.sin_addr.S_un.S_addr = fi->_listen_addr;
 	recv_sa.sin_port = fi->_listen_port;
 	if (bind(recv_sock, reinterpret_cast<sockaddr*>(&recv_sa), sizeof(sockaddr_in))) {
-		err("°ó¶¨µ½¶Ë¿Ú´íÎó");
+		err("ç»‘å®šåˆ°ç«¯å£é”™è¯¯");
 		return 1;
 	}
 
@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	sprintf(buf, "%s ×ª·¢Æ÷ %s -> %s", (fi->_prot == forward_info::protocol_choice::TCP ? "TCP" : "UDP"), argv[2], argv[3]);
+	sprintf(buf, "%s è½¬å‘å™¨ %s -> %s", (fi->_prot == forward_info::protocol_choice::TCP ? "TCP" : "UDP"), argv[2], argv[3]);
 	log(buf);
 	if (fi->_prot == forward_info::protocol_choice::TCP) {
 		tcp_loop(fi);
@@ -317,7 +317,7 @@ bool split_ip_port(char * args, std::stringstream & ss_ip, std::stringstream & s
 std::shared_ptr<forward_info> forward_info::make_from_args(int argc, char* argv[]) {
 	char buf[BUFSIZ];
 	if (argc != 4) {
-		sprintf(buf, "ÃüÁîĞĞ²ÎÊı¸öÊı´íÎó\nÓÃ·¨: %s [tcp|udp] local_ip:port forward_ip:port", argv[0]);
+		sprintf(buf, "å‘½ä»¤è¡Œå‚æ•°ä¸ªæ•°é”™è¯¯\nç”¨æ³•: %s [tcp|udp] local_ip:port forward_ip:port", argv[0]);
 		err(buf);
 		return nullptr;
 	}
@@ -328,7 +328,7 @@ std::shared_ptr<forward_info> forward_info::make_from_args(int argc, char* argv[
 	} else if (strcmp(argv[1], "udp") == 0 || strcmp(argv[1], "UDP") == 0) {
 		pfi->_prot = forward_info::protocol_choice::UDP;
 	} else {
-		err("²»Ö§³ÖµÄĞ­ÒéÀàĞÍ");
+		err("ä¸æ”¯æŒçš„åè®®ç±»å‹");
 		return nullptr;
 	}
 
@@ -336,14 +336,14 @@ std::shared_ptr<forward_info> forward_info::make_from_args(int argc, char* argv[
 	std::stringstream ss_forward_ip, ss_forward_port;
 
 	if (!split_ip_port(argv[2], ss_listen_ip, ss_listen_port)) {
-		err("¼àÌı ip:port ²ÎÊı¸ñÊ½´íÎó");
+		err("ç›‘å¬ ip:port å‚æ•°æ ¼å¼é”™è¯¯");
 		return nullptr;
 	}
 	pfi->_listen_port = ntohs(atoi(ss_listen_port.str().c_str()));
 	pfi->_listen_addr = inet_addr(ss_listen_ip.str().c_str());
 
 	if (!split_ip_port(argv[3], ss_forward_ip, ss_forward_port)) {
-		err("×ª·¢ ip:port ²ÎÊı¸ñÊ½´íÎó");
+		err("è½¬å‘ ip:port å‚æ•°æ ¼å¼é”™è¯¯");
 		return nullptr;
 	}
 	pfi->_forward_port = ntohs(atoi(ss_forward_port.str().c_str()));
@@ -351,3 +351,4 @@ std::shared_ptr<forward_info> forward_info::make_from_args(int argc, char* argv[
 
 	return pfi;
 }
+
